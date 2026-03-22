@@ -1,64 +1,53 @@
 const API_KEY = "4d924c94e93e4c3da88605c524f51c58";
-const url = "https://newsapi.org/v2/everything?q=";
+const url = "https://corsproxy.io/?https://newsapi.org/v2/everything?q=";
 
-window.addEventListener("load", () => fetchNews("Technology"));
+const container = document.getElementById("cardscontainer");
+
+window.addEventListener("load", () => fetchNews("Delhi"));
 
 async function fetchNews(query) {
-    const res = await fetch(`${url}${query}&apiKey=${API_KEY}`);
-    const data = await res.json();
-    bindData(data.articles);
+  const res = await fetch(`${url}${query}&apiKey=${API_KEY}`);
+  const data = await res.json();
+  bindData(data.articles);
 }
+
 
 function bindData(articles) {
-    const cardsContainer = document.getElementById("cardscontainer");
-    const newsCardTemplate = document.getElementById("template-news-card");
+  container.innerHTML = "";
+  const template = document.getElementById("template-news-card");
 
-    cardsContainer.innerHTML = "";
+  articles.forEach(article => {
+    if (!article.urlToImage) return;
 
-    articles.forEach((article) => {
-        if (!article.urlToImage) return;
+    const clone = template.content.cloneNode(true);
 
-        const cardClone = newsCardTemplate.content.cloneNode(true);
-        fillDataInCard(cardClone, article);
-        cardsContainer.appendChild(cardClone);
-    })
+    clone.querySelector("#news-img").src = article.urlToImage;
+    clone.querySelector("#news-title").innerText = article.title;
+    clone.querySelector("#news-desc").innerText = article.description || "";
+
+    clone.firstElementChild.onclick = () => window.open(article.url);
+
+    container.appendChild(clone);
+  });
 }
 
-function fillDataInCard(cardClone, article) {
-    const newsImg = cardClone.querySelector("#news-img");
-    const newsTitle = cardClone.querySelector("#news-title");
-    const newsSource = cardClone.querySelector("#news-source");
-    const newsDesc = cardClone.querySelector("#news-desc");
 
-    newsImg.src = article.urlToImage;
-    newsTitle.innerHTML = `${article.title.slice(0, 60)}...`;
-    newsDesc.innerHTML = `${article.description.slice(0, 150)}...`;
+document.querySelectorAll(".city-pill").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".city-pill").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
 
-    const date = new Date(article.publishedAt).toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+    fetchNews(btn.dataset.query);
+  };
+});
 
-    newsSource.innerHTML = `${article.source.name} · ${date}`;
 
-    cardClone.firstElementChild.addEventListener("click", () => {
-        window.open(article.url, "_blank");
-    })
-}
+document.getElementById("search-button").onclick = () => {
+  const query = document.getElementById("search-text").value;
+  fetchNews(query);
+};
 
-let curSelectedNav = null;
-function onNavItemClick(id) {
-    fetchNews(id);
-    const navItem = document.getElementById(id);
-    curSelectedNav?.classList.remove("active");
-    curSelectedNav = navItem;
-    curSelectedNav.classList.add("active");
-}
-
-const searchButton = document.getElementById("search-button");
-const searchText = document.getElementById("search-text");
-
-searchButton.addEventListener("click", () => {
-    const query = searchText.value;
-    if (!query) return;
-    fetchNews(query);
-    curSelectedNav?.classList.remove("active");
-    curSelectedNav = null;
-})
+// DARK MODE
+document.getElementById("dark-toggle").onclick = () => {
+  document.body.classList.toggle("dark");
+};
